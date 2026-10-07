@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#2D6A4F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VaultTrack">
+<meta name="description" content="Track, manage and cancel forgotten subscriptions. Save money every month.">
+<title>VaultTrack — Subscription Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--bg2:#f7f7f7;--bg3:#efefef;--ink:#0f0f0f;--ink2:#555;--ink3:#999;--ink4:#ccc;--border:#ebebeb;--border2:#ddd;--blue:#2D6A4F;--blue-soft:#D8F3DC;--blue-txt:#1B4332;--red:#D94F4F;--red-soft:#FEF3F3;--red-txt:#A32D2D;--amber:#E8A030;--amber-soft:#FFF8EC;--amber-txt:#7A5000;--green:#27AE60;--green-soft:#EAFAF1;--green-txt:#1A6B3A;--nav-h:64px}
+.dark{--bg:#0a0a0a;--bg2:#121212;--bg3:#1a1a1a;--ink:#f0f0f0;--ink2:#aaa;--ink3:#666;--ink4:#333;--border:#1e1e1e;--border2:#2a2a2a;--blue-soft:#1B4332;--blue-txt:#74C69D}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;transition:background .25s,color .25s}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex;animation:fadeUp .28s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.1rem;border-bottom:.5px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:20}
+.logo{display:flex;align-items:center;gap:6px}
+.logo-icon{width:28px;height:28px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#fff;font-weight:700;flex-shrink:0}
+.logo-text{font-size:1.05rem;font-weight:600;color:var(--ink);letter-spacing:-.4px}
+.logo-text span{color:var(--blue);font-weight:300}
+.icon-btn{width:32px;height:32px;border-radius:50%;background:var(--bg2);border:none;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.pill{background:var(--blue-soft);color:var(--blue-txt);border:none;border-radius:100px;padding:.25rem .75rem;font-size:.7rem;font-weight:500;cursor:pointer;font-family:inherit}
+.pill.solid{background:var(--blue);color:#fff}
+/* BOTTOM NAV */
+.bnav{height:var(--nav-h);display:flex;background:var(--bg);border-top:.5px solid var(--border);flex-shrink:0;padding:0 4px;position:fixed;bottom:0;left:0;right:0;z-index:20}
+.ntab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border-radius:10px;padding:5px 0}
+.ntab .ni{font-size:1.1rem}.ntab .nl{font-size:.58rem;font-weight:500;color:var(--ink3)}
+.ntab.active .nl{color:var(--blue)}.ndot{width:4px;height:4px;border-radius:50%;background:var(--blue);opacity:0}
+.ntab.active .ndot{opacity:1}
+/* SCROLL */
+.scroll{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h)+16px);-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+/* BANNERS */
+.install-bar{background:var(--ink);color:var(--bg);padding:.5rem 1rem;display:none;align-items:center;justify-content:space-between;gap:.5rem;font-size:.74rem;flex-shrink:0}
+.install-bar.show{display:flex}
+.install-bar strong{color:#74C69D}
+.i-btn{background:var(--blue);color:#fff;border:none;border-radius:100px;padding:.26rem .75rem;font-size:.7rem;font-weight:500;cursor:pointer;font-family:inherit}
+.trial-bar{background:var(--ink);color:var(--bg);padding:.42rem 1rem;display:flex;align-items:center;justify-content:center;gap:.65rem;font-size:.72rem;flex-shrink:0}
+.trial-bar strong{color:#74C69D}
+.t-btn{background:var(--blue);color:#fff;border:none;border-radius:100px;padding:.2rem .65rem;font-size:.67rem;font-weight:500;cursor:pointer;font-family:inherit}
+.offline-bar{background:var(--amber);color:#fff;padding:.4rem 1rem;text-align:center;font-size:.74rem;font-weight:500;display:none;flex-shrink:0}
+.offline-bar.show{display:block}
+/* LANDING */
+.land-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:2rem 1.25rem 5rem}
+.land-tag{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:500;margin-bottom:.75rem}
+.land-h{font-size:2.2rem;font-weight:600;line-height:1.1;letter-spacing:-.03em;margin-bottom:.7rem}
+.land-h em{color:var(--blue);font-style:normal;font-weight:300}
+.land-sub{font-size:.88rem;color:var(--ink2);line-height:1.65;margin-bottom:2rem}
+.cta{background:var(--blue);color:#fff;border:none;border-radius:100px;padding:.88rem;font-size:.9rem;font-weight:500;cursor:pointer;font-family:inherit;width:100%;margin-bottom:.65rem}
+.cta2{background:transparent;color:var(--ink2);border:.5px solid var(--border2);border-radius:100px;padding:.85rem;font-size:.85rem;cursor:pointer;font-family:inherit;width:100%}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:1.75rem}
+.stat{background:var(--bg2);border-radius:14px;padding:.75rem .5rem;text-align:center}
+.stat-n{font-size:1.1rem;font-weight:600;color:var(--blue)}
+.stat-l{font-size:.62rem;color:var(--ink3);margin-top:.15rem;line-height:1.3}
+.features{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1.5rem}
+.feat{background:var(--bg2);border-radius:14px;padding:.9rem;border:.5px solid var(--border)}
+.feat-ico{font-size:1.3rem;margin-bottom:.35rem}
+.feat-title{font-size:.8rem;font-weight:600;margin-bottom:.2rem}
+.feat-desc{font-size:.72rem;color:var(--ink3);line-height:1.45}
+/* AUTH */
+.auth-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:1.5rem 1.25rem 5rem}
+.auth-title{font-size:1.1rem;font-weight:600;text-align:center;margin-bottom:.35rem}
+.auth-sub{font-size:.78rem;color:var(--ink2);text-align:center;margin-bottom:1.5rem;line-height:1.55}
+.field{margin-bottom:11px}
+.field label{font-size:.7rem;color:var(--ink3);font-weight:500;display:block;margin-bottom:3px}
+.field input{width:100%;font-family:inherit;font-size:.85rem;border:.5px solid var(--border2);border-radius:12px;padding:.6rem .85rem;outline:none;background:var(--bg2);color:var(--ink)}
+.field input:focus{border-color:var(--blue)}
+.btn-main{width:100%;background:var(--blue);color:#fff;border:none;border-radius:100px;padding:.85rem;font-size:.9rem;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px}
+.auth-switch{text-align:center;font-size:.75rem;color:var(--ink3);margin-top:1rem}
+.auth-switch span{color:var(--blue);cursor:pointer;font-weight:500}
+.div-row{display:flex;align-items:center;gap:.5rem;margin:.85rem 0;color:var(--ink3);font-size:.72rem}
+.div-row::before,.div-row::after{content:'';flex:1;height:.5px;background:var(--border2)}
+.g-btn{width:100%;background:var(--bg2);color:var(--ink);border:.5px solid var(--border2);border-radius:100px;padding:.78rem;font-size:.85rem;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.5rem}
+/* HERO */
+.hero{margin:12px 12px 10px;border-radius:20px;background:linear-gradient(135deg,#1B4332,#2D6A4F);padding:1.1rem;color:#fff;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-15px;top:-15px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero-lbl{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:#74C69D;margin-bottom:.25rem}
+.hero-amt{font-size:1.9rem;font-weight:600;letter-spacing:-.03em}
+.hero-s{font-size:.7rem;color:rgba(255,255,255,.45);margin-bottom:.85rem}
+.hero-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.hs{background:rgba(255,255,255,.1);border-radius:10px;padding:.55rem .6rem}
+.hs-v{font-size:.9rem;font-weight:600}.hs-l{font-size:.6rem;color:rgba(255,255,255,.45);margin-top:.1rem}
+/* ALERTS */
+.alert{margin:0 12px 7px;border-radius:12px;padding:.6rem .85rem;font-size:.76rem;line-height:1.5;display:flex;align-items:flex-start;gap:.4rem}
+.alert.red{background:var(--red-soft);color:var(--red-txt);border:.5px solid var(--red)}
+.alert.amber{background:var(--amber-soft);color:var(--amber-txt);border:.5px solid var(--amber)}
+.alert.green{background:var(--green-soft);color:var(--green-txt);border:.5px solid var(--green)}
+/* SEC HDR */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 12px 6px}
+.sec-t{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:500}
+.sec-a{font-size:.73rem;color:var(--blue);cursor:pointer;font-weight:500}
+/* SUB CARDS */
+.sub-card{margin:0 12px 7px;background:var(--bg);border:.5px solid var(--border);border-radius:14px;padding:.78rem .9rem;display:flex;align-items:center;gap:9px}
+.sub-card.fr{border-left:3px solid var(--red)}.sub-card.fa{border-left:3px solid var(--amber)}
+.s-ico{width:35px;height:35px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.88rem;flex-shrink:0}
+.s-info{flex:1;min-width:0}.s-name{font-weight:500;font-size:.86rem;margin-bottom:.08rem}.s-meta{font-size:.68rem;color:var(--ink3)}
+.s-right{text-align:right;flex-shrink:0}.s-amt{font-weight:600;font-size:.88rem}.s-freq{font-size:.65rem;color:var(--ink3)}
+.bdg{font-size:.58rem;padding:.1rem .42rem;border-radius:100px;font-weight:500;margin-top:.2rem;display:inline-block}
+.br{background:var(--red-soft);color:var(--red-txt)}.ba{background:var(--amber-soft);color:var(--amber-txt)}.bg{background:var(--green-soft);color:var(--green-txt)}
+.rm{background:none;border:none;color:var(--ink4);font-size:.65rem;cursor:pointer;font-family:inherit;padding:0;margin-top:2px;display:block}
+/* AI */
+.ai-card{margin:0 12px 10px;border-radius:14px;overflow:hidden;border:.5px solid var(--border)}
+.ai-top{background:var(--ink);padding:.65rem .9rem;display:flex;align-items:center;justify-content:space-between}
+.ai-lbl{font-size:.66rem;color:#74C69D;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+.btn-ai{font-size:.68rem;background:var(--blue);color:#fff;border:none;border-radius:100px;padding:.26rem .78rem;cursor:pointer;font-family:inherit}
+.btn-ai:disabled{opacity:.35;cursor:default}
+.ai-body{padding:.8rem .9rem;font-size:.8rem;line-height:1.7;color:var(--ink);background:var(--bg);min-height:52px}
+.ai-body.muted{color:var(--ink3);font-style:italic}
+.ai-dots{display:inline-flex;gap:4px;align-items:center}
+.ai-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);animation:blink 1.2s infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+/* TRENDS */
+.mstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px}
+.mcard{background:var(--bg2);border-radius:12px;padding:.7rem .65rem}
+.m-lbl{font-size:.6rem;color:var(--ink3);margin-bottom:.18rem}
+.m-val{font-size:1rem;font-weight:600;letter-spacing:-.02em}
+.m-val.r{color:var(--red)}.m-val.b{color:var(--blue)}.m-val.g{color:var(--green)}
+.chart-card{margin:0 12px 10px;background:var(--bg);border:.5px solid var(--border);border-radius:14px;padding:.9rem}
+.chart-title{font-size:.78rem;font-weight:500;margin-bottom:.18rem;color:var(--ink)}
+.chart-sub{font-size:.66rem;color:var(--ink3);margin-bottom:.7rem}
+.cat-bars{display:flex;flex-direction:column;gap:.55rem}
+.cat-row{display:flex;align-items:center;gap:.5rem}
+.cat-lbl{font-size:.68rem;color:var(--ink2);width:64px;flex-shrink:0}
+.cat-track{flex:1;height:6px;background:var(--bg3);border-radius:100px;overflow:hidden}
+.cat-fill{height:100%;border-radius:100px;transition:width .7s}
+.cat-val{font-size:.68rem;color:var(--ink2);width:34px;text-align:right;flex-shrink:0}
+canvas{width:100%!important;display:block}
+/* UPGRADE */
+.pw-wrap{padding:1rem .9rem}
+.pw-hero{background:linear-gradient(135deg,#1B4332,#2D6A4F);border-radius:20px;padding:1.25rem;color:#fff;text-align:center;margin-bottom:12px}
+.pw-hero-ico{font-size:1.5rem;margin-bottom:.4rem}
+.pw-hero-title{font-size:1rem;font-weight:600;margin-bottom:.3rem}
+.pw-hero-sub{font-size:.75rem;color:rgba(255,255,255,.55);line-height:1.55}
+.perks{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px}
+.perk{font-size:.73rem;color:var(--ink2);display:flex;align-items:center;gap:.3rem}
+.plan{border:.5px solid var(--border);border-radius:14px;padding:.78rem .9rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:7px;background:var(--bg)}
+.plan.sel{border:1.5px solid var(--blue);background:var(--blue-soft)}
+.plan-name{font-size:.83rem;font-weight:500;color:var(--ink)}.plan-desc{font-size:.68rem;color:var(--ink3)}
+.plan-price{font-size:1.05rem;font-weight:600;color:var(--ink)}
+.plan-price small{font-size:.65rem;color:var(--ink3);font-weight:400}
+.save-tag{background:var(--green-soft);color:var(--green-txt);font-size:.6rem;padding:.1rem .38rem;border-radius:100px;font-weight:500;margin-left:.3rem}
+.btn-pay{width:100%;background:var(--blue);color:#fff;border:none;border-radius:100px;padding:.85rem;font-size:.9rem;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px;margin-bottom:.5rem}
+/* PROFILE */
+.profile-hdr{display:flex;align-items:center;gap:10px;padding:14px 12px 10px}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--blue-soft);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.sg{margin:0 12px 10px;background:var(--bg2);border-radius:14px;overflow:hidden}
+.si{padding:.7rem .9rem;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid var(--border);cursor:pointer}
+.si:last-child{border-bottom:none}
+.si-lbl{font-size:.82rem;color:var(--ink)}.si-val{font-size:.74rem;color:var(--ink3)}
+.tog{width:38px;height:21px;border-radius:100px;background:var(--border2);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.tog.on{background:var(--blue)}
+.tok{position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tog.on .tok{left:19.5px}
+/* SHEETS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s}
+.overlay.open{opacity:1;pointer-events:all}
+.sheet{position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--bg);border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1),background .25s;max-height:85vh;overflow-y:auto}
+.sheet.open{transform:translateY(0)}
+.sh{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 12px}
+.sheet-title{font-size:.92rem;font-weight:600;padding:0 18px;margin-bottom:12px;color:var(--ink)}
+.sheet-body{padding:0 18px 40px}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-sheet{width:100%;background:var(--blue);color:#fff;border:none;border-radius:100px;padding:.82rem;font-size:.88rem;font-weight:500;cursor:pointer;font-family:inherit;margin-top:8px}
+.pr{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px}
+.po{border:.5px solid var(--border2);border-radius:100px;padding:.3rem .7rem;font-size:.75rem;cursor:pointer;color:var(--ink2);background:transparent;font-family:inherit}
+.po.sel{background:var(--blue-soft);border-color:var(--blue);color:var(--blue-txt);font-weight:500}
+.import-zone{border:1.5px dashed var(--border2);border-radius:16px;padding:1.5rem;text-align:center;cursor:pointer;background:var(--bg2)}
+.det-item{background:var(--bg2);border-radius:11px;padding:.6rem .8rem;display:flex;align-items:center;justify-content:space-between;border:.5px solid var(--border);margin-bottom:6px}
+.cur-row{padding:.65rem .9rem;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid var(--border);cursor:pointer}
+.cur-row:last-child{border-bottom:none}
+.price-row{padding:.7rem .9rem;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid var(--border)}
+.price-row:last-child{border-bottom:none}
+.guide-step{display:flex;gap:.65rem;margin-bottom:.85rem;align-items:flex-start}
+.g-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:.68rem;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.g-txt{font-size:.8rem;color:var(--ink);line-height:1.55}
+</style>
+</head>
+<body>
+
+<div class="offline-bar" id="offline-bar">📡 You're offline — showing cached data</div>
+<div class="install-bar" id="install-bar"><span>📲 Install <strong>VaultTrack</strong> — works offline</span><button class="i-btn" onclick="doInstall()">Install</button></div>
+
+<!-- LANDING -->
+<div class="screen active" id="s-land">
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">VT</div>
+      <div class="logo-text">Vault<span>Track</span></div>
+    </div>
+    <button class="icon-btn" onclick="toggleDark()" id="dm-land">🌙</button>
+  </div>
+  <div class="land-body">
+    <div class="land-tag">Subscription Manager</div>
+    <h1 class="land-h">Your money.<br>Your <em>control.</em></h1>
+    <p class="land-sub">VaultTrack finds every subscription draining your account, flags unused ones, and gives you AI-powered advice to cut the waste.</p>
+    <button class="cta" onclick="goAuth(false)">Start free — 7 days, no card</button>
+    <button class="cta2" onclick="goAuth(true)">Log in to my account</button>
+    <div class="stats">
+      <div class="stat"><div class="stat-n">$348</div><div class="stat-l">avg wasted/yr</div></div>
+      <div class="stat"><div class="stat-n">6.4</div><div class="stat-l">forgotten subs</div></div>
+      <div class="stat"><div class="stat-n">2min</div><div class="stat-l">to see all</div></div>
+    </div>
+    <div class="features">
+      <div class="feat"><div class="feat-ico">🤖</div><div class="feat-title">AI Advice</div><div class="feat-desc">Named tips to cut waste and save money</div></div>
+      <div class="feat"><div class="feat-ico">🔔</div><div class="feat-title">Alerts</div><div class="feat-desc">Email before every renewal</div></div>
+      <div class="feat"><div class="feat-ico">📈</div><div class="feat-title">Trends</div><div class="feat-desc">6-month spend history</div></div>
+      <div class="feat"><div class="feat-ico">💱</div><div class="feat-title">Multi-currency</div><div class="feat-desc">KES, USD, GBP, EUR and more</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div class="screen" id="s-auth">
+  <div class="topbar">
+    <div class="logo"><div class="logo-icon">VT</div><div class="logo-text">Vault<span>Track</span></div></div>
+    <button class="icon-btn" onclick="showScreen('s-land')" style="font-size:.8rem;color:var(--ink2)">← Back</button>
+  </div>
+  <div class="auth-body">
+    <div style="text-align:center;margin-bottom:1.25rem"><div class="logo-icon" style="width:48px;height:48px;border-radius:14px;font-size:1rem;margin:0 auto">VT</div></div>
+    <div class="auth-title" id="auth-title">Welcome back</div>
+    <div class="auth-sub" id="auth-sub">Sign in to see your subscriptions and start saving.</div>
+    <button class="g-btn" onclick="handleAuth()">🔵 Continue with Google</button>
+    <div class="div-row">or</div>
+    <div class="field"><label>Email</label><input type="email" id="auth-email" placeholder="you@example.com"></div>
+    <div class="field"><label>Password</label><input type="password" id="auth-pw" placeholder="••••••••"></div>
+    <div id="auth-err" style="background:var(--red-soft);color:var(--red-txt);border-radius:10px;padding:.55rem .8rem;font-size:.76rem;margin-bottom:8px;display:none"></div>
+    <button class="btn-main" onclick="handleAuth()" id="auth-btn">Sign in</button>
+    <div class="auth-switch" id="auth-switch">Don't have an account? <span onclick="toggleAuth()">Create one free</span></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen" id="s-app">
+  <div class="trial-bar">Trial: <strong>7 days left</strong> <button class="t-btn" onclick="switchPage('upgrade')">Upgrade</button></div>
+  <div class="topbar">
+    <div class="logo"><div class="logo-icon">VT</div><div class="logo-text">Vault<span>Track</span></div></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="pill" onclick="showSheet('currency')" id="cur-btn">USD</button>
+      <button class="icon-btn" onclick="toggleDark()" id="dm-app">🌙</button>
+      <button class="pill solid" onclick="switchPage('upgrade')">⭐ Pro</button>
+    </div>
+  </div>
+  <div style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column">
+
+    <!-- HOME -->
+    <div class="scroll" id="page-home">
+      <div style="padding:12px 12px 4px;font-size:.95rem;font-weight:600;color:var(--ink)">Good morning, <span style="color:var(--blue);font-weight:300" id="greet">👋</span></div>
+      <div class="hero">
+        <div class="hero-lbl">MONTHLY SPEND</div>
+        <div class="hero-amt" id="h-mon">$0.00</div>
+        <div class="hero-s">across all subscriptions</div>
+        <div class="hero-row">
+          <div class="hs"><div class="hs-v" id="h-ann" style="color:#f08080">$0</div><div class="hs-l">annual burn</div></div>
+          <div class="hs"><div class="hs-v" id="h-save" style="color:#74C69D">$0</div><div class="hs-l">saveable</div></div>
+          <div class="hs"><div class="hs-v" id="h-cnt" style="color:#fff">0</div><div class="hs-l">total subs</div></div>
+        </div>
+      </div>
+      <div class="alert red" id="al-u" style="display:none">🚨 <span id="al-u-txt"></span></div>
+      <div class="alert amber" id="al-r" style="display:none">⚠️ <span id="al-r-txt"></span></div>
+      <div class="alert green">📈 Price alert: Netflix &amp; Spotify raised prices — you may be paying more than last year</div>
+      <div class="sec-hdr"><div class="sec-t">SUBSCRIPTIONS</div><div class="sec-a" onclick="showSheet('add')">＋ Add new</div></div>
+      <div id="sub-list"></div>
+      <div class="sec-hdr" style="margin-top:4px"><div class="sec-t">AI MONEY ADVICE</div><div class="sec-a" onclick="showSheet('import')">🏦 Import</div></div>
+      <div class="ai-card">
+        <div class="ai-top"><div class="ai-lbl">✦ VAULTTRACK AI</div><button class="btn-ai" id="ai-btn" onclick="runAI()" disabled>Analyse</button></div>
+        <div class="ai-body muted" id="ai-body">Add 2+ subscriptions then tap Analyse for personalised advice.</div>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+
+    <!-- TRENDS -->
+    <div class="scroll" id="page-trends" style="display:none">
+      <div class="mstrip">
+        <div class="mcard"><div class="m-lbl">This month</div><div class="m-val r" id="t-mon">$0</div></div>
+        <div class="mcard"><div class="m-lbl">vs last mo</div><div class="m-val" id="t-delta">—</div></div>
+        <div class="mcard"><div class="m-lbl">6mo avg</div><div class="m-val b" id="t-avg">$0</div></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Monthly spend — 6 months</div>
+        <div class="chart-sub">Total (green) vs waste (red)</div>
+        <div style="display:flex;gap:.7rem;margin-bottom:.6rem">
+          <div style="display:flex;align-items:center;gap:.3rem;font-size:.66rem;color:var(--ink2)"><div style="width:7px;height:7px;border-radius:50%;background:#2D6A4F"></div>Total</div>
+          <div style="display:flex;align-items:center;gap:.3rem;font-size:.66rem;color:var(--ink2)"><div style="width:7px;height:7px;border-radius:50%;background:#D94F4F"></div>Waste</div>
+        </div>
+        <canvas id="lineChart" height="120"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Spend by category</div>
+        <div class="chart-sub">Current monthly breakdown</div>
+        <canvas id="barChart" height="110"></canvas>
+      </div>
+      <div class="chart-card"><div class="chart-title">Category breakdown</div><div class="cat-bars" id="cat-bars"></div></div>
+      <div style="height:8px"></div>
+    </div>
+
+    <!-- UPGRADE -->
+    <div class="scroll" id="page-upgrade" style="display:none">
+      <div class="pw-wrap">
+        <div class="pw-hero">
+          <div class="pw-hero-ico">🔐</div>
+          <div class="pw-hero-title">Unlock VaultTrack Pro</div>
+          <div class="pw-hero-sub">Everything you need to stop wasting money on subscriptions — forever.</div>
+        </div>
+        <div class="perks">
+          <div class="perk">✓ Unlimited subs</div><div class="perk">✓ Email alerts</div>
+          <div class="perk">✓ AI digest</div><div class="perk">✓ Cancel guides</div>
+          <div class="perk">✓ Bank import</div><div class="perk">✓ Price tracking</div>
+          <div class="perk">✓ Spend trends</div><div class="perk">✓ Multi-currency</div>
+        </div>
+        <div class="plan sel" id="plan-m" onclick="pickPlan('m')"><div><div class="plan-name">Monthly</div><div class="plan-desc">Cancel anytime</div></div><div class="plan-price">$5<small>/mo</small></div></div>
+        <div class="plan" id="plan-y" onclick="pickPlan('y')"><div><div class="plan-name">Yearly <span class="save-tag">Save 50%</span></div><div class="plan-desc">$30 billed annually</div></div><div class="plan-price">$2.50<small>/mo</small></div></div>
+        <button class="btn-pay" onclick="handlePay()" id="pay-btn">Pay with Stripe →</button>
+        <div style="text-align:center;font-size:.7rem;color:var(--ink3)">🔒 Secure · Cancel anytime · All data kept</div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="scroll" id="page-profile" style="display:none">
+      <div class="profile-hdr">
+        <div class="avatar">👤</div>
+        <div><div style="font-weight:600;font-size:.92rem;color:var(--ink)" id="p-email">user@example.com</div><div style="font-size:.7rem;color:var(--blue);font-weight:500;margin-top:.1rem">Free Trial — 7 days left</div></div>
+      </div>
+      <div style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:500;padding:0 12px;margin-bottom:6px">PRICE RISE TRACKER</div>
+      <div class="sg" style="margin-bottom:10px">
+        <div class="price-row"><div><div style="font-size:.82rem;font-weight:500;color:var(--ink)">Netflix</div><div style="font-size:.67rem;color:var(--ink3)">Standard · Apr 2025</div></div><div style="text-align:right"><div style="font-size:.67rem;color:var(--ink3);text-decoration:line-through">$15.49</div><div style="font-size:.82rem;font-weight:600;color:var(--red)">$17.99</div><div style="font-size:.58rem;background:var(--red-soft);color:var(--red-txt);padding:.1rem .38rem;border-radius:100px;font-weight:500;display:inline-block;margin-top:2px">+$2.50/mo</div></div></div>
+        <div class="price-row"><div><div style="font-size:.82rem;font-weight:500;color:var(--ink)">Spotify</div><div style="font-size:.67rem;color:var(--ink3)">Individual · Jan 2025</div></div><div style="text-align:right"><div style="font-size:.67rem;color:var(--ink3);text-decoration:line-through">$9.99</div><div style="font-size:.82rem;font-weight:600;color:var(--red)">$11.99</div><div style="font-size:.58rem;background:var(--red-soft);color:var(--red-txt);padding:.1rem .38rem;border-radius:100px;font-weight:500;display:inline-block;margin-top:2px">+$2.00/mo</div></div></div>
+        <div class="price-row"><div><div style="font-size:.82rem;font-weight:500;color:var(--ink)">Adobe CC</div><div style="font-size:.67rem;color:var(--ink3)">All Apps · Jun 2024</div></div><div style="text-align:right"><div style="font-size:.67rem;color:var(--ink3);text-decoration:line-through">$54.99</div><div style="font-size:.82rem;font-weight:600;color:var(--red)">$59.99</div><div style="font-size:.58rem;background:var(--red-soft);color:var(--red-txt);padding:.1rem .38rem;border-radius:100px;font-weight:500;display:inline-block;margin-top:2px">+$5.00/mo</div></div></div>
+      </div>
+      <div style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:500;padding:0 12px;margin-bottom:6px">EMAIL ALERTS</div>
+      <div class="sg" style="margin-bottom:10px" id="alert-toggles"></div>
+      <div style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:500;padding:0 12px;margin-bottom:6px">SETTINGS</div>
+      <div class="sg">
+        <div class="si" onclick="toggleDark()"><div class="si-lbl">Dark mode</div><div class="tog" id="dm-tog" onclick="event.stopPropagation();toggleDark()"><div class="tok"></div></div></div>
+        <div class="si" onclick="showSheet('currency')"><div class="si-lbl">Currency</div><div class="si-val" id="cur-val">🇺🇸 USD ($)</div></div>
+        <div class="si" onclick="switchPage('upgrade')"><div class="si-lbl" style="color:var(--blue)">Upgrade to Pro</div><div class="si-val">→</div></div>
+        <div class="si" onclick="handleSignOut()"><div class="si-lbl" style="color:var(--red-txt)">Sign out</div><div class="si-val">→</div></div>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+  </div>
+
+  <div class="bnav">
+    <div class="ntab active" id="nav-home" onclick="switchPage('home',this)"><div class="ni">🏠</div><div class="nl">Home</div><div class="ndot"></div></div>
+    <div class="ntab" id="nav-trends" onclick="switchPage('trends',this)"><div class="ni">📈</div><div class="nl">Trends</div><div class="ndot"></div></div>
+    <div class="ntab" id="nav-upgrade" onclick="switchPage('upgrade',this)"><div class="ni">⭐</div><div class="nl">Upgrade</div><div class="ndot"></div></div>
+    <div class="ntab" id="nav-profile" onclick="switchPage('profile',this)"><div class="ni">👤</div><div class="nl">Profile</div><div class="ndot"></div></div>
+  </div>
+</div>
+
+<!-- SHEETS -->
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet-add">
+  <div class="sh"></div><div class="sheet-title">Add subscription</div>
+  <div class="sheet-body">
+    <div class="field"><label>Service name</label><input type="text" id="f-name" placeholder="e.g. Netflix"></div>
+    <div class="fr2">
+      <div class="field"><label>Amount (USD)</label><input type="number" id="f-amt" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="field"><label>Billing</label><div class="pr" id="cycle-pr"><button class="po sel" onclick="setCycle('monthly',this)">Monthly</button><button class="po" onclick="setCycle('yearly',this)">Yearly</button><button class="po" onclick="setCycle('weekly',this)">Weekly</button></div></div>
+    </div>
+    <div class="field"><label>Category</label><div class="pr" id="cat-pr"><button class="po sel" onclick="setCat('streaming',this)">▶ Streaming</button><button class="po" onclick="setCat('software',this)">⌨ Software</button><button class="po" onclick="setCat('fitness',this)">💪 Fitness</button><button class="po" onclick="setCat('food',this)">🍽 Food</button><button class="po" onclick="setCat('news',this)">📰 News</button><button class="po" onclick="setCat('other',this)">📦 Other</button></div></div>
+    <div class="field"><label>Start date</label><input type="date" id="f-date"></div>
+    <button class="btn-sheet" onclick="addSub()">Save subscription</button>
+  </div>
+</div>
+<div class="sheet" id="sheet-import">
+  <div class="sh"></div><div class="sheet-title">Import from bank statement</div>
+  <div class="sheet-body">
+    <div class="import-zone" onclick="runImport()" id="imp-zone"><div style="font-size:1.8rem;margin-bottom:.5rem" id="imp-ico">🏦</div><div style="font-size:.85rem;font-weight:500;margin-bottom:.25rem" id="imp-title">Scan bank statement</div><div style="font-size:.72rem;color:var(--ink3);line-height:1.5" id="imp-sub">Tap to detect recurring charges automatically.</div></div>
+    <div id="det-list" style="margin-top:10px"></div>
+    <button class="btn-sheet" id="imp-btn" style="display:none" onclick="confirmImport()">Import all detected subscriptions</button>
+  </div>
+</div>
+<div class="sheet" id="sheet-cancel">
+  <div class="sh"></div><div class="sheet-title" id="cancel-title">How to cancel</div>
+  <div class="sheet-body" id="cancel-body"></div>
+</div>
+<div class="sheet" id="sheet-currency">
+  <div class="sh"></div><div class="sheet-title">Select currency</div>
+  <div class="sheet-body" style="padding:0 0 40px">
+    <div class="sg" style="margin:0">
+      <div class="cur-row" onclick="setCurrency('USD','$','🇺🇸')"><div><div style="font-size:.84rem;font-weight:500">🇺🇸 US Dollar</div><div style="font-size:.69rem;color:var(--ink3)">USD ($)</div></div><span id="ck-usd" style="color:var(--blue)">✓</span></div>
+      <div class="cur-row" onclick="setCurrency('KES','KSh','🇰🇪')"><div><div style="font-size:.84rem;font-weight:500">🇰🇪 Kenyan Shilling</div><div style="font-size:.69rem;color:var(--ink3)">KES (KSh)</div></div><span id="ck-kes" style="color:var(--blue);opacity:0">✓</span></div>
+      <div class="cur-row" onclick="setCurrency('GBP','£','🇬🇧')"><div><div style="font-size:.84rem;font-weight:500">🇬🇧 British Pound</div><div style="font-size:.69rem;color:var(--ink3)">GBP (£)</div></div><span id="ck-gbp" style="color:var(--blue);opacity:0">✓</span></div>
+      <div class="cur-row" onclick="setCurrency('EUR','€','🇪🇺')"><div><div style="font-size:.84rem;font-weight:500">🇪🇺 Euro</div><div style="font-size:.69rem;color:var(--ink3)">EUR (€)</div></div><span id="ck-eur" style="color:var(--blue);opacity:0">✓</span></div>
+      <div class="cur-row" onclick="setCurrency('NGN','₦','🇳🇬')"><div><div style="font-size:.84rem;font-weight:500">🇳🇬 Nigerian Naira</div><div style="font-size:.69rem;color:var(--ink3)">NGN (₦)</div></div><span id="ck-ngn" style="color:var(--blue);opacity:0">✓</span></div>
+      <div class="cur-row" onclick="setCurrency('ZAR','R','🇿🇦')"><div><div style="font-size:.84rem;font-weight:500">🇿🇦 South African Rand</div><div style="font-size:.69rem;color:var(--ink3)">ZAR (R)</div></div><span id="ck-zar" style="color:var(--blue);opacity:0">✓</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS={streaming:{bg:'#D8F3DC',dbg:'#1B4332',c:'#1B4332',dc:'#74C69D',icon:'▶',bar:'#2D6A4F'},software:{bg:'#EEEDFE',dbg:'#1e1a40',c:'#3C3489',dc:'#a89cf0',icon:'⌨',bar:'#7b6fa0'},fitness:{bg:'#EAFAF1',dbg:'#0a2016',c:'#1A6B3A',dc:'#6fcf97',icon:'💪',bar:'#27AE60'},food:{bg:'#FFF8EC',dbg:'#2a1f08',c:'#7A5000',dc:'#f0b858',icon:'🍽',bar:'#E8A030'},news:{bg:'#F5F5F5',dbg:'#222',c:'#444',dc:'#ccc',icon:'📰',bar:'#999'},other:{bg:'#F5F5F5',dbg:'#222',c:'#555',dc:'#bbb',icon:'📦',bar:'#bbb'}}
+const CURRENCIES={USD:{sym:'$',rate:1,flag:'🇺🇸'},KES:{sym:'KSh',rate:129.5,flag:'🇰🇪'},GBP:{sym:'£',rate:0.79,flag:'🇬🇧'},EUR:{sym:'€',rate:0.92,flag:'🇪🇺'},NGN:{sym:'₦',rate:1610,flag:'🇳🇬'},ZAR:{sym:'R',rate:18.6,flag:'🇿🇦'}}
+const GUIDES={netflix:['Go to netflix.com and sign in','Click profile → Account','Scroll to Membership & Billing','Click Cancel Membership','Confirm cancellation'],spotify:['Open Spotify → your name → Account','Click Change Plan','Scroll down → Cancel Premium','Follow confirmation steps'],'adobe cc':['Sign in at account.adobe.com','Go to Plans → Manage plan','Select Cancel your plan','Confirm cancellation'],calm:['Open Calm → Profile → Subscription','Tap Cancel Subscription','Confirm cancellation'],'nyt digital':['Go to nytimes.com → sign in','Account → Subscription','Click Cancel and confirm']}
+const FAKE_IMPORTS=[{name:'Disney+',amount:13.99,cycle:'monthly',category:'streaming'},{name:'iCloud+',amount:2.99,cycle:'monthly',category:'software'},{name:'Amazon Prime',amount:14.99,cycle:'monthly',category:'other'},{name:'Headspace',amount:12.99,cycle:'monthly',category:'fitness'}]
+const ALERTS=[{ico:'📅',name:'Renewal reminders',time:'3 & 7 days before'},{ico:'💰',name:'Monthly digest',time:'1st of each month'},{ico:'📈',name:'Price rise alerts',time:'When detected'},{ico:'🗑️',name:'Unused sub nudge',time:'After 30 days'}]
+let subs=JSON.parse(localStorage.getItem('vt-subs')||'[]')
+let nid=subs.length?Math.max(...subs.map(s=>s.id))+1:1
+let isDark=localStorage.getItem('vt-dark')==='true'
+let curCode=localStorage.getItem('vt-cur')||'USD'
+let selPlan='m',fCycle='monthly',fCat='streaming',impDone=false,user=null
+let atog=[true,true,true,false]
+
+window.addEventListener('DOMContentLoaded',()=>{
+  if(isDark)document.body.classList.add('dark')
+  buildAlerts()
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0]
+  const u=localStorage.getItem('vt-user')
+  if(u){user=JSON.parse(u);goApp()}
+  setupPWA()
+  window.addEventListener('online',()=>document.getElementById('offline-bar').classList.remove('show'))
+  window.addEventListener('offline',()=>document.getElementById('offline-bar').classList.add('show'))
+  if(!navigator.onLine)document.getElementById('offline-bar').classList.add('show')
+  ;['page-trends','page-upgrade','page-profile'].forEach(p=>{const el=document.getElementById(p);if(el)el.style.display='none'})
+})
+
+let installEvt=null
+function setupPWA(){
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;document.getElementById('install-bar').classList.add('show')})
+  window.addEventListener('appinstalled',()=>document.getElementById('install-bar').classList.remove('show'))
+  if(window.matchMedia('(display-mode: standalone)').matches)document.getElementById('install-bar').classList.remove('show')
+}
+async function doInstall(){if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;document.getElementById('install-bar').classList.remove('show')}
+
+function toM(s){return s.cycle==='yearly'?s.amount/12:s.cycle==='weekly'?s.amount*4.33:s.amount}
+function nxtR(s){const d=new Date(s.start_date),now=new Date();if(s.cycle==='monthly'){while(d<=now)d.setMonth(d.getMonth()+1)}if(s.cycle==='yearly'){while(d<=now)d.setFullYear(d.getFullYear()+1)}if(s.cycle==='weekly'){while(d<=now)d.setDate(d.getDate()+7)}return d}
+function daysU(s){return Math.ceil((nxtR(s)-new Date())/864e5)}
+function fmt(usd){const c=CURRENCIES[curCode]||CURRENCIES.USD;const v=usd*c.rate;return c.sym+(v>=100?Math.round(v).toLocaleString():v.toFixed(2))}
+function save(){localStorage.setItem('vt-subs',JSON.stringify(subs))}
+
+let isSignUp=false
+function goAuth(isLogin){isSignUp=!isLogin;updateAuth();showScreen('s-auth')}
+function toggleAuth(){isSignUp=!isSignUp;updateAuth()}
+function updateAuth(){
+  document.getElementById('auth-title').textContent=isSignUp?'Create account':'Welcome back'
+  document.getElementById('auth-sub').textContent=isSignUp?'Start your 7-day free trial — no card required.':'Sign in to manage your subscriptions.'
+  document.getElementById('auth-btn').textContent=isSignUp?'Create account':'Sign in'
+  document.getElementById('auth-switch').innerHTML=isSignUp?'Already have an account? <span onclick="toggleAuth()">Sign in</span>':"Don't have an account? <span onclick=\"toggleAuth()\">Create one free</span>"
+}
+function handleAuth(){
+  const email=document.getElementById('auth-email').value.trim(),pw=document.getElementById('auth-pw').value
+  const err=document.getElementById('auth-err');err.style.display='none'
+  if(!email){err.textContent='Please enter your email';err.style.display='block';return}
+  if(!pw||pw.length<6){err.textContent='Password must be at least 6 characters';err.style.display='block';return}
+  const btn=document.getElementById('auth-btn');btn.textContent='⏳ Please wait…';btn.disabled=true
+  setTimeout(()=>{user={email,name:email.split('@')[0]};localStorage.setItem('vt-user',JSON.stringify(user));btn.textContent=isSignUp?'Create account':'Sign in';btn.disabled=false;goApp()},1200)
+}
+function handleSignOut(){if(!confirm('Sign out of VaultTrack?'))return;localStorage.removeItem('vt-user');user=null;showScreen('s-land')}
+function goApp(){if(user){document.getElementById('greet').textContent=user.name+' 👋';document.getElementById('p-email').textContent=user.email};showScreen('s-app');render()}
+
+function render(){
+  const monthly=subs.reduce((a,s)=>a+toM(s),0),unused=subs.filter(s=>!s.is_used),waste=unused.reduce((a,s)=>a+toM(s),0),urgent=subs.filter(s=>daysU(s)<=7&&s.is_used)
+  document.getElementById('h-mon').textContent=fmt(monthly)
+  document.getElementById('h-ann').textContent=fmt(monthly*12)
+  document.getElementById('h-save').textContent=fmt(waste)
+  document.getElementById('h-cnt').textContent=subs.length
+  const au=document.getElementById('al-u'),ar=document.getElementById('al-r')
+  if(unused.length){au.style.display='flex';document.getElementById('al-u-txt').textContent=unused.length+' unused sub'+(unused.length>1?'s':'')+' — cancel to save '+fmt(waste)+'/mo'}else au.style.display='none'
+  if(urgent.length){ar.style.display='flex';document.getElementById('al-r-txt').textContent=urgent.map(s=>s.name).join(', ')+' renew'+(urgent.length===1?'s':'')+' in 7 days'}else ar.style.display='none'
+  const list=document.getElementById('sub-list')
+  if(!subs.length){list.innerHTML='<div style="text-align:center;padding:2rem 1rem;color:var(--ink3);font-size:.82rem;border:1px dashed var(--border2);border-radius:14px;margin:0 12px">No subscriptions yet<br>Tap ＋ Add new to get started</div>';document.getElementById('ai-btn').disabled=true;return}
+  list.innerHTML=[...subs].sort((a,b)=>toM(b)-toM(a)).map(s=>{
+    const cat=CATS[s.category]||CATS.other,d=daysU(s),ren=nxtR(s),fr=!s.is_used,fa=!fr&&d<=7
+    const ibg=isDark?cat.dbg:cat.bg,ic=isDark?cat.dc:cat.c
+    const badge=fr?'<span class="bdg br">unused</span>':fa?`<span class="bdg ba">renews ${d}d</span>`:'<span class="bdg bg">active</span>'
+    const hasG=!!GUIDES[s.name.toLowerCase()]
+    return`<div class="sub-card ${fr?'fr':fa?'fa':''}"><div class="s-ico" style="background:${ibg};color:${ic}">${cat.icon}</div><div class="s-info"><div class="s-name">${s.name}</div><div class="s-meta">${s.cycle} · next ${ren.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>${badge}</div><div class="s-right"><div class="s-amt">${fmt(s.amount)}</div><div class="s-freq">/${s.cycle==='yearly'?'yr':s.cycle==='weekly'?'wk':'mo'}</div><div style="display:flex;gap:5px;justify-content:flex-end;margin-top:3px">${hasG?`<button class="rm" style="color:var(--red-txt);font-weight:500" onclick="showGuide('${s.name}')">guide</button>`:''}<button class="rm" onclick="rmSub(${s.id})">remove</button></div></div></div>`
+  }).join('')
+  document.getElementById('ai-btn').disabled=subs.length<2
+}
+function addSub(){
+  const name=document.getElementById('f-name').value.trim(),amount=parseFloat(document.getElementById('f-amt').value)
+  if(!name||!amount){alert('Please fill in name and amount');return}
+  subs.push({id:nid++,name,amount,cycle:fCycle,category:fCat,start_date:document.getElementById('f-date').value||new Date().toISOString().split('T')[0],is_used:true})
+  save();document.getElementById('f-name').value='';document.getElementById('f-amt').value='';closeSheet();render()
+}
+function rmSub(id){if(!confirm('Remove this subscription?'))return;subs=subs.filter(s=>s.id!==id);save();render()}
+function setCycle(v,el){fCycle=v;document.querySelectorAll('#cycle-pr .po').forEach(b=>b.classList.remove('sel'));el.classList.add('sel')}
+function setCat(v,el){fCat=v;document.querySelectorAll('#cat-pr .po').forEach(b=>b.classList.remove('sel'));el.classList.add('sel')}
+
+async function runAI(){
+  const btn=document.getElementById('ai-btn'),body=document.getElementById('ai-body')
+  btn.disabled=true;btn.textContent='…';body.className='ai-body'
+  body.innerHTML='<div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>'
+  const monthly=subs.reduce((a,s)=>a+toM(s),0),unused=subs.filter(s=>!s.is_used),waste=unused.reduce((a,s)=>a+toM(s),0)
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:220,messages:[{role:'user',content:`Sharp finance advisor. 3-4 sentences. Name actual services. Suggest cheaper alternatives. One clear action today. Under 90 words. No bullets.\n\nSubs:\n${subs.map(s=>`- ${s.name}: $${s.amount}/${s.cycle}, used: ${s.is_used}`).join('\n')}\nMonthly: $${monthly.toFixed(2)} | Unused: ${unused.map(s=>s.name).join(', ')||'none'} | Saveable: $${waste.toFixed(2)}`}]})})
+    const data=await res.json();body.className='ai-body';body.innerHTML=data.content?.map(i=>i.text||'').join('')||'Analysis complete.'
+  }catch(e){body.innerHTML='<span style="color:var(--red)">Could not load. Check your connection and try again.</span>'}
+  btn.disabled=false;btn.textContent='Analyse'
+}
+
+function buildCharts(){
+  const monthly=subs.reduce((a,s)=>a+toM(s),0),waste=subs.filter(s=>!s.is_used).reduce((a,s)=>a+toM(s),0)
+  const months=['Dec','Jan','Feb','Mar','Apr','May']
+  const totals=[.77,.84,.90,.94,.97,1].map(r=>monthly*r),wastes=[.45,.55,.65,.72,.82,1].map(r=>waste*r)
+  const avg=totals.reduce((a,v)=>a+v,0)/6,delta=totals[5]-totals[4]
+  document.getElementById('t-mon').textContent=fmt(monthly)
+  document.getElementById('t-avg').textContent=fmt(avg)
+  const dEl=document.getElementById('t-delta');dEl.textContent=(delta>=0?'+':'')+fmt(delta);dEl.style.color=delta>0?'var(--red)':'var(--green)'
+  const gc='rgba(128,128,128,.1)',tc=isDark?'#555':'#bbb'
+  const lc=document.getElementById('lineChart'),W=lc.clientWidth||320,H=120
+  lc.width=W*2;lc.height=H*2;const ctx=lc.getContext('2d');ctx.scale(2,2)
+  const p={t:8,r:10,b:24,l:34},w=W-p.l-p.r,h=H-p.t-p.b,mx=Math.max(...totals)*1.18
+  const xp=i=>p.l+i*(w/(months.length-1)),yp=v=>p.t+h-(v/mx)*h
+  ctx.strokeStyle=gc;ctx.lineWidth=.5
+  ;[0,.5,1].forEach(f=>{const y=p.t+h*f;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(p.l+w,y);ctx.stroke();ctx.fillStyle=tc;ctx.font='7.5px Space Grotesk';ctx.textAlign='right';ctx.fillText('$'+Math.round(mx*(1-f)),p.l-3,y+3)})
+  months.forEach((l,i)=>{ctx.fillStyle=tc;ctx.font='7.5px Space Grotesk';ctx.textAlign='center';ctx.fillText(l,xp(i),H-p.b+13)})
+  ctx.beginPath();wastes.forEach((v,i)=>i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v)));ctx.lineTo(xp(wastes.length-1),yp(0));ctx.lineTo(xp(0),yp(0));ctx.closePath();ctx.fillStyle='rgba(217,79,79,.1)';ctx.fill()
+  ctx.beginPath();totals.forEach((v,i)=>i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v)));ctx.strokeStyle='#2D6A4F';ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke()
+  ctx.beginPath();wastes.forEach((v,i)=>i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v)));ctx.strokeStyle='rgba(217,79,79,.7)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])
+  totals.forEach((v,i)=>{ctx.beginPath();ctx.arc(xp(i),yp(v),2.5,0,Math.PI*2);ctx.fillStyle='#2D6A4F';ctx.fill();ctx.strokeStyle=isDark?'#0a0a0a':'#fff';ctx.lineWidth=1.5;ctx.stroke()})
+  const catSpend={};subs.forEach(s=>{catSpend[s.category]=(catSpend[s.category]||0)+toM(s)})
+  const keys=Object.keys(catSpend).sort((a,b)=>catSpend[b]-catSpend[a])
+  const bc=document.getElementById('barChart'),BW=bc.clientWidth||320,BH=110
+  bc.width=BW*2;bc.height=BH*2;const bctx=bc.getContext('2d');bctx.scale(2,2)
+  const bp={t:8,r:10,b:20,l:34},bw=BW-bp.l-bp.r,bh=BH-bp.t-bp.b,bmx=(Math.max(...keys.map(k=>catSpend[k]))||1)*1.2
+  const gap=bw/(keys.length||1),barw=Math.min(26,gap*.55)
+  bctx.strokeStyle=gc;bctx.lineWidth=.5
+  ;[0,.5,1].forEach(f=>{const y=bp.t+bh*f;bctx.beginPath();bctx.moveTo(bp.l,y);bctx.lineTo(bp.l+bw,y);bctx.stroke();bctx.fillStyle=tc;bctx.font='7.5px Space Grotesk';bctx.textAlign='right';bctx.fillText('$'+Math.round(bmx*(1-f)),bp.l-3,y+3)})
+  keys.forEach((k,i)=>{const cat=CATS[k]||CATS.other,x=bp.l+i*gap+gap/2-barw/2,bH2=(catSpend[k]/bmx)*bh,y=bp.t+bh-bH2;bctx.fillStyle=cat.bar;if(bctx.roundRect)bctx.roundRect(x,y,barw,bH2,3);else bctx.rect(x,y,barw,bH2);bctx.fill();bctx.fillStyle=tc;bctx.font='7px Space Grotesk';bctx.textAlign='center';bctx.fillText(k,x+barw/2,BH-bp.b+12);bctx.fillStyle=isDark?'#aaa':'#555';bctx.font='bold 7.5px Space Grotesk';bctx.fillText('$'+Math.round(catSpend[k]),x+barw/2,y-3)})
+  const mx2=Math.max(...keys.map(k=>catSpend[k]))||1
+  document.getElementById('cat-bars').innerHTML=keys.map(k=>`<div class="cat-row"><div class="cat-lbl">${k}</div><div class="cat-track"><div class="cat-fill" style="width:${Math.round(catSpend[k]/mx2*100)}%;background:${(CATS[k]||CATS.other).bar}"></div></div><div class="cat-val">${fmt(catSpend[k])}</div></div>`).join('')
+}
+
+function runImport(){
+  if(impDone)return
+  document.getElementById('imp-ico').textContent='⏳';document.getElementById('imp-title').textContent='Scanning transactions…';document.getElementById('imp-sub').textContent='Detecting recurring charges from your bank data.'
+  setTimeout(()=>{
+    document.getElementById('imp-ico').textContent='✅';document.getElementById('imp-title').textContent='4 subscriptions detected!';document.getElementById('imp-sub').textContent='Review and confirm which ones to import.'
+    document.getElementById('det-list').innerHTML=FAKE_IMPORTS.map(s=>`<div class="det-item"><div><div style="font-size:.8rem;font-weight:500">${s.name}</div><div style="font-size:.68rem;color:var(--ink3)">${s.cycle} · ${s.category}</div></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:.78rem;color:var(--blue);font-weight:500">$${s.amount}</span><span style="color:var(--green);font-size:1rem">✓</span></div></div>`).join('')
+    document.getElementById('imp-btn').style.display='block';impDone=true
+  },1800)
+}
+function confirmImport(){FAKE_IMPORTS.forEach(s=>subs.push({id:nid++,...s,start_date:new Date().toISOString().split('T')[0],is_used:true}));save();closeSheet();render();impDone=false;document.getElementById('imp-ico').textContent='🏦';document.getElementById('imp-title').textContent='Scan bank statement';document.getElementById('imp-sub').textContent='Tap to detect recurring charges automatically.';document.getElementById('det-list').innerHTML='';document.getElementById('imp-btn').style.display='none'}
+
+function showGuide(name){
+  const steps=GUIDES[name.toLowerCase()]||['Visit the service website','Go to Account → Settings','Find Subscription / Billing','Click Cancel and confirm']
+  document.getElementById('cancel-title').textContent='Cancel '+name
+  const found=subs.find(s=>s.name===name)
+  const ren=found?nxtR(found):new Date()
+  document.getElementById('cancel-body').innerHTML=steps.map((s,i)=>`<div class="guide-step"><div class="g-num">${i+1}</div><div class="g-txt">${s}</div></div>`).join('')+`<div style="background:var(--amber-soft);border-radius:12px;padding:.75rem;font-size:.75rem;color:var(--amber-txt);line-height:1.55;margin-top:.5rem">⚠️ Cancel before your next renewal on <strong>${ren.toLocaleDateString('en-GB',{day:'numeric',month:'long'})}</strong> to avoid being charged again.</div>`
+  showSheet('cancel')
+}
+
+function setCurrency(code,sym,flag){curCode=code;localStorage.setItem('vt-cur',code);document.getElementById('cur-btn').textContent=code;document.getElementById('cur-val').textContent=flag+' '+code+' ('+sym+')';['usd','kes','gbp','eur','ngn','zar'].forEach(c=>document.getElementById('ck-'+c).style.opacity=c===code.toLowerCase()?'1':'0');closeSheet();render()}
+function pickPlan(p){selPlan=p;document.querySelectorAll('.plan').forEach(el=>el.classList.remove('sel'));document.getElementById('plan-'+p).classList.add('sel')}
+function handlePay(){const btn=document.getElementById('pay-btn');btn.textContent='⏳ Connecting to Stripe…';btn.disabled=true;setTimeout(()=>{btn.textContent='✅ Welcome to VaultTrack Pro!';btn.style.background='var(--green)';setTimeout(()=>{btn.textContent='Pay with Stripe →';btn.disabled=false;btn.style.background='';switchPage('home')},1500)},2000)}
+function buildAlerts(){document.getElementById('alert-toggles').innerHTML=ALERTS.map((a,i)=>`<div class="si" style="border-bottom:.5px solid var(--border)"><div><div style="font-size:.82rem;font-weight:500;color:var(--ink)">${a.ico} ${a.name}</div><div style="font-size:.68rem;color:var(--ink3)">${a.time}</div></div><div class="tog ${atog[i]?'on':''}" onclick="toggleAlert(${i},this)"><div class="tok"></div></div></div>`).join('')}
+function toggleAlert(i,el){atog[i]=!atog[i];el.classList.toggle('on')}
+function toggleDark(){isDark=!isDark;document.body.classList.toggle('dark',isDark);localStorage.setItem('vt-dark',isDark);const icon=isDark?'☀️':'🌙';['dm-land','dm-app'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=icon});const tog=document.getElementById('dm-tog');if(tog)tog.classList.toggle('on',isDark)}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function switchPage(page,navEl){['home','trends','upgrade','profile'].forEach(p=>{const el=document.getElementById('page-'+p);if(el)el.style.display='none'});const pg=document.getElementById('page-'+page);if(pg){pg.style.display='flex';pg.style.flexDirection='column'};document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));if(navEl)navEl.classList.add('active');else{const map={home:'nav-home',trends:'nav-trends',upgrade:'nav-upgrade',profile:'nav-profile'};const el=document.getElementById(map[page]);if(el)el.classList.add('active')};if(page==='trends')setTimeout(buildCharts,60)}
+function showSheet(n){document.getElementById('overlay').classList.add('open');document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'));document.getElementById('sheet-'+n).classList.add('open')}
+function closeSheet(){document.getElementById('overlay').classList.remove('open');document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'))}
+</script>
+</body>
+</html>
